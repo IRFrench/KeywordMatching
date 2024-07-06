@@ -42,7 +42,7 @@ func (r *RegexClient) Match(keyword string) ([]string, error) {
 }
 
 func (r *RegexClient) Stat() {
-	slog.Info("linear client stats", "keyword list length", len(r.keywords))
+	slog.Info("regex client stats", "keyword list length", len(r.keywords))
 }
 
 func NewRegexClient() (RegexClient, error) {

@@ -12,8 +12,14 @@ match.bench: ## Benchmark the tooling
 match.linear: match.build ## Run linear matching on KEYWORD
 	./build/match -l -k $(KEYWORD)
 
-match.regex: match.build ## Run linear matching on KEYWORD
+match.regex: match.build ## Run regex matching on KEYWORD
 	./build/match -r -k $(KEYWORD)
 
-match.rolling-hash: match.build ## Run linear matching on KEYWORD
+match.rolling-hash: match.build ## Run rolling hash matching on KEYWORD
 	./build/match -rh -k $(KEYWORD)
+
+match.alt-rolling-hash: match.build ## Run alternate rolling hash matching on KEYWORD
+	./build/match -arh -k $(KEYWORD)
+
+match.rune-rolling-hash: match.build ## Run rune rolling hash matching on KEYWORD
+	./build/match -rrh -k $(KEYWORD)

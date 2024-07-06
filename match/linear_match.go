@@ -11,7 +11,7 @@ type LinearMatchClient struct {
 }
 
 // Only works for one wildcard
-func (l *LinearMatchClient) Match(keyword string) []string {
+func (l *LinearMatchClient) Match(keyword string) ([]string, error) {
 	lowerKeyword := strings.ToLower(keyword)
 
 	// Split apart the word into const and var
@@ -21,11 +21,10 @@ func (l *LinearMatchClient) Match(keyword string) []string {
 	var wildcardPosition int
 
 	for index := range splitKeyword {
-		if slices.Contains(ALPHABET, splitKeyword[index]) {
-			continue
+		if slices.Contains(MATCH_CHARACTERS, splitKeyword[index]) {
+			wildcardPosition = index
+			break
 		}
-		wildcardPosition = index
-		break
 	}
 
 	possibleKeywords := []string{}
@@ -49,7 +48,7 @@ func (l *LinearMatchClient) Match(keyword string) []string {
 		}
 	}
 
-	return foundWords
+	return foundWords, nil
 
 }
 

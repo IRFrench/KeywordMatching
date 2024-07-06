@@ -7,11 +7,12 @@ import (
 )
 
 type RollingHashClient struct {
-	keywordMap map[int][]string
+	keywordMap   map[int][]string
+	keywordCount int
 }
 
 // will only work for one wildcard
-func (r *RollingHashClient) Match(keyword string) []string {
+func (r *RollingHashClient) Match(keyword string) ([]string, error) {
 	lowerKeyword := strings.ToLower(keyword)
 
 	// Split apart the word into const and var
@@ -21,11 +22,10 @@ func (r *RollingHashClient) Match(keyword string) []string {
 	var wildcardPosition int
 
 	for index := range splitKeyword {
-		if slices.Contains(ALPHABET, splitKeyword[index]) {
-			continue
+		if slices.Contains(MATCH_CHARACTERS, splitKeyword[index]) {
+			wildcardPosition = index
+			break
 		}
-		wildcardPosition = index
-		break
 	}
 
 	possibleKeywords := map[int]string{}
@@ -54,13 +54,12 @@ func (r *RollingHashClient) Match(keyword string) []string {
 		}
 	}
 
-	return foundWords
+	return foundWords, nil
 }
 
 func (r *RollingHashClient) Stat() {
 	maxSize := 0
 	minSize := 0
-	avgSize := 0
 	totalSegments := 0
 	medianMap := map[int]int{}
 
@@ -79,24 +78,36 @@ func (r *RollingHashClient) Stat() {
 		totalSegments++
 
 		_, found := medianMap[listLength]
-		if found {
+		if !found {
 			medianMap[listLength] = 0
 		}
 		medianMap[listLength]++
 	}
 
 	highestCount := 0
-	for length, count := range medianMap {
+	for _, count := range medianMap {
 		if count > highestCount {
-			avgSize = length
 			highestCount = count
 		}
 	}
 
-	slog.Info("linear client stats",
+	allMedians := []int{}
+	for length, count := range medianMap {
+		if count == highestCount {
+			allMedians = append(allMedians, length)
+		}
+	}
+
+	medianMiddle := len(allMedians) / 2
+	slices.Sort(allMedians)
+
+	slog.Info("rolling hash client stats",
 		"max segment size", maxSize,
 		"min segment size", minSize,
-		"avg segment size", avgSize,
+		"avg segment size", r.keywordCount/totalSegments,
+		"median segment size", allMedians[medianMiddle],
+		"median count", highestCount,
+		"all keywords", r.keywordCount,
 		"total segments", totalSegments,
 	)
 }
@@ -118,7 +129,8 @@ func NewRollingHashClient() (RollingHashClient, error) {
 	}
 
 	return RollingHashClient{
-		keywordMap: keywordHashMap,
+		keywordMap:   keywordHashMap,
+		keywordCount: len(keywordList),
 	}, nil
 }
 
@@ -128,7 +140,7 @@ func numberHash(keyword string) int {
 	for index := range splitKeyword {
 		number, found := ATOI[splitKeyword[index]]
 		if !found {
-			slog.Warn("non alphabet letter found", "word", keyword, "letter", splitKeyword[index])
+			slog.Warn("non known letter found", "word", keyword, "letter", splitKeyword[index])
 		}
 		numberHash *= number
 	}

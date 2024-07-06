@@ -16,32 +16,25 @@ func main() {
 
 	if checks.linear {
 		slog.Info("Running linear check")
-		linearClient, err := match.NewLinearMatchClient()
+		hashClient, err := match.NewLinearMatchClient()
 		if err != nil {
 			slog.Error("failed to build client", "error", err)
 		}
-		linearClient.Stat()
-		startTime := time.Now()
-		matches := linearClient.Match(keyword)
-		endTime := time.Now()
-		slog.Info("found matches", "time taken", endTime.Sub(startTime), "matches", len(matches))
+		if err := runMatchClient(keyword, &hashClient); err != nil {
+			slog.Error("failed to run client", "error", err)
+		}
 		return
 	}
 
 	if checks.regex {
 		slog.Info("Running regex check")
-		regexClient, err := match.NewRegexClient()
+		hashClient, err := match.NewRegexClient()
 		if err != nil {
 			slog.Error("failed to build client", "error", err)
 		}
-		regexClient.Stat()
-		startTime := time.Now()
-		matches, err := regexClient.Match(keyword)
-		endTime := time.Now()
-		if err != nil {
-			slog.Error("error finding matches", "error", err)
+		if err := runMatchClient(keyword, &hashClient); err != nil {
+			slog.Error("failed to run client", "error", err)
 		}
-		slog.Info("found matches", "time taken", endTime.Sub(startTime), "matches", len(matches))
 		return
 	}
 
@@ -51,22 +44,45 @@ func main() {
 		if err != nil {
 			slog.Error("failed to build client", "error", err)
 		}
-		hashClient.Stat()
-		startTime := time.Now()
-		matches := hashClient.Match(keyword)
-		endTime := time.Now()
-		slog.Info("found matches", "time taken", endTime.Sub(startTime), "matches", len(matches))
+		if err := runMatchClient(keyword, &hashClient); err != nil {
+			slog.Error("failed to run client", "error", err)
+		}
+		return
+	}
+
+	if checks.altRollingHash {
+		slog.Info("Running alternate rolling hash check")
+		hashClient, err := match.NewAltRollingHashClient()
+		if err != nil {
+			slog.Error("failed to build client", "error", err)
+		}
+		if err := runMatchClient(keyword, &hashClient); err != nil {
+			slog.Error("failed to run client", "error", err)
+		}
+		return
+	}
+
+	if checks.runeRollingHash {
+		slog.Info("Running rune rolling hash check")
+		hashClient, err := match.NewRuneRollingHashClient()
+		if err != nil {
+			slog.Error("failed to build client", "error", err)
+		}
+		if err := runMatchClient(keyword, &hashClient); err != nil {
+			slog.Error("failed to run client", "error", err)
+		}
 		return
 	}
 
 	slog.Warn("No checks requested")
-	return
 }
 
 type checks struct {
-	linear      bool
-	regex       bool
-	rollingHash bool
+	linear          bool
+	regex           bool
+	rollingHash     bool
+	altRollingHash  bool
+	runeRollingHash bool
 }
 
 func getFlags() (string, checks) {
@@ -74,11 +90,28 @@ func getFlags() (string, checks) {
 	linearFlag := flag.Bool("l", false, "run linear matching")
 	regexFlag := flag.Bool("r", false, "run regex matching")
 	rollingHashFlag := flag.Bool("rh", false, "run rolling hash matching")
+	altRollingHashFlag := flag.Bool("arh", false, "run alt rolling hash matching")
+	runeRollingHashFlag := flag.Bool("rrh", false, "run rune rolling hash matching")
 	flag.Parse()
 
 	return *keyword, checks{
-		linear:      *linearFlag,
-		regex:       *regexFlag,
-		rollingHash: *rollingHashFlag,
+		linear:          *linearFlag,
+		regex:           *regexFlag,
+		rollingHash:     *rollingHashFlag,
+		altRollingHash:  *altRollingHashFlag,
+		runeRollingHash: *runeRollingHashFlag,
 	}
+}
+
+func runMatchClient(keyword string, client match.KeywordMatchClient) error {
+	client.Stat()
+	startTime := time.Now()
+	matches, err := client.Match(keyword)
+	if err != nil {
+		return err
+	}
+	endTime := time.Now()
+	slog.Info("found matches", "time taken", endTime.Sub(startTime), "matches", len(matches))
+	slog.Info("results", "matches", matches)
+	return nil
 }

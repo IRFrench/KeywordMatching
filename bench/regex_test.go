@@ -15,6 +15,7 @@ func BenchmarkRegexMatch(b *testing.B) {
 		"keyword test":  "p*rn",
 		"short keyword": "c*t",
 		"long keyword":  "av*cado",
+		"double wild":   "av*c*do",
 	}
 
 	for name, keyword := range testCases {
