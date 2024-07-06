@@ -136,3 +136,8 @@ We have an extra test for regex, as this is able to handle more wildcards, so I 
 | avg segement size | 1 |
 | median segement size | 2 |
 | total segments | 94601 |
+## Conclusions
+
+Using a multiplicative hash map with go rune encoding worked really well, getting under the 10 nanosecond marker.
+
+There might be other take aways to but eh, I just had fun making this :)
