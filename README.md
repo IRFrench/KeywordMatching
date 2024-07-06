@@ -18,6 +18,10 @@ So to solve this, we need either need to stop the search early when it takes too
 
 Anyways, onto the tests.
 
+### Hardware
+
+cpu: 11th Gen Intel(R) Core(TM) i3-1115G4 @ 3.00GHz
+
 ### Linear matching
 
 Create all of the potential keywords, loop through the keyword list and see if the keywords are in there. Done.
